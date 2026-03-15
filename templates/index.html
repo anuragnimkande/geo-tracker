@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes"
+    />
+    <title>EmergAlert • Emergency Location</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system,
+          BlinkMacSystemFont,
+          "SF Pro Text",
+          "Inter",
+          -apple-system,
+          sans-serif;
+        background: #0a0c0f;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow-x: hidden;
+        padding: 16px;
+      }
+
+      /* Animated background */
+      body::before {
+        content: "";
+        position: fixed;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle at 50% 50%,
+          rgba(220, 38, 38, 0.08) 0%,
+          transparent 50%,
+          rgba(0, 0, 0, 0) 100%
+        );
+        animation: rotate 25s linear infinite;
+        top: -50%;
+        left: -50%;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      @keyframes rotate {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .container {
+        width: 100%;
+        max-width: 560px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 10;
+      }
+
+      /* Glass panel - main container */
+      .glass-panel {
+        background: rgba(18, 22, 28, 0.85);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 40px;
+        padding: 32px 24px;
+        border: 1px solid rgba(220, 38, 38, 0.15);
+        box-shadow:
+          0 25px 50px -12px rgba(0, 0, 0, 0.8),
+          inset 0 1px 1px rgba(255, 255, 255, 0.03);
+        width: 100%;
+      }
+
+      /* Header section */
+      .header-section {
+        text-align: center;
+        margin-bottom: 32px;
+      }
+
+      .contact-badge {
+        background: rgba(220, 38, 38, 0.08);
+        border: 1px solid rgba(220, 38, 38, 0.2);
+        border-radius: 100px;
+        padding: 10px 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: #e5e7eb;
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0.3px;
+        margin-bottom: 16px;
+        backdrop-filter: blur(5px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      .contact-badge i {
+        color: #f87171;
+        font-size: 14px;
+      }
+
+      .contact-badge .status-dot {
+        width: 8px;
+        height: 8px;
+        background: #10b981;
+        border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 0 12px #10b981;
+        margin-left: 4px;
+      }
+
+      .title {
+        color: #f3f4f6;
+        font-size: 20px;
+        font-weight: 500;
+        letter-spacing: -0.3px;
+        margin-top: 8px;
+        opacity: 0.9;
+      }
+
+      /* Main button section */
+      .button-section {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 20px 0 28px 0;
+        position: relative;
+      }
+
+      .alert-button {
+        width: min(280px, 65vw);
+        height: min(280px, 65vw);
+        max-width: 300px;
+        max-height: 300px;
+        min-width: 220px;
+        min-height: 220px;
+        border-radius: 50%;
+        background: linear-gradient(145deg, #1f2937, #111827);
+        border: none;
+        cursor: pointer;
+        box-shadow:
+          0 30px 50px -15px rgba(0, 0, 0, 0.6),
+          0 0 0 2px rgba(220, 38, 38, 0.3),
+          inset 0 2px 4px rgba(255, 255, 255, 0.1),
+          inset 0 -4px 8px rgba(0, 0, 0, 0.5);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: clamp(60px, 20vw, 100px);
+        color: #dc2626;
+        text-shadow: 0 0 40px rgba(220, 38, 38, 0.6);
+        animation: softPulse 3s ease-in-out infinite;
+        position: relative;
+        margin: 0 auto;
+      }
+
+      @keyframes softPulse {
+        0%,
+        100% {
+          box-shadow:
+            0 30px 50px -15px rgba(0, 0, 0, 0.6),
+            0 0 0 2px rgba(220, 38, 38, 0.3),
+            inset 0 2px 4px rgba(255, 255, 255, 0.1),
+            inset 0 -4px 8px rgba(0, 0, 0, 0.5);
+        }
+        50% {
+          box-shadow:
+            0 35px 60px -15px rgba(220, 38, 38, 0.4),
+            0 0 0 4px rgba(220, 38, 38, 0.4),
+            inset 0 2px 4px rgba(255, 255, 255, 0.1),
+            inset 0 -4px 8px rgba(0, 0, 0, 0.5);
+        }
+      }
+
+      .alert-button::before {
+        content: "";
+        position: absolute;
+        top: -10px;
+        left: -10px;
+        right: -10px;
+        bottom: -10px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #dc2626, #7f1d1d, #dc2626);
+        opacity: 0.2;
+        z-index: -1;
+        filter: blur(20px);
+        animation: glow 4s ease-in-out infinite;
+      }
+
+      @keyframes glow {
+        0%,
+        100% {
+          opacity: 0.2;
+          filter: blur(20px);
+        }
+        50% {
+          opacity: 0.35;
+          filter: blur(25px);
+        }
+      }
+
+      .alert-button:hover {
+        transform: scale(1.03);
+        color: #ef4444;
+      }
+
+      .alert-button:active {
+        transform: scale(0.97);
+      }
+
+      .alert-button i {
+        transition: transform 0.3s ease;
+      }
+
+      .alert-button:hover i {
+        transform: scale(1.05);
+      }
+
+      /* Loading state */
+      .alert-button.loading {
+        pointer-events: none;
+        opacity: 0.9;
+        animation: none;
+      }
+
+      .alert-button.loading i {
+        display: none;
+      }
+
+      .alert-button.loading::after {
+        content: "";
+        width: min(60px, 15vw);
+        height: min(60px, 15vw);
+        border: 4px solid rgba(220, 38, 38, 0.2);
+        border-top-color: #dc2626;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        position: absolute;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Instruction text */
+      .instruction {
+        color: #9ca3af;
+        font-size: clamp(14px, 4vw, 16px);
+        margin: 24px auto 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: rgba(255, 255, 255, 0.02);
+        padding: 14px 28px;
+        border-radius: 100px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        width: fit-content;
+        max-width: 90%;
+        font-weight: 400;
+        letter-spacing: 0.3px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      .instruction i {
+        color: #f87171;
+        font-size: 18px;
+      }
+
+      /* Status container */
+      .status-section {
+        display: flex;
+        justify-content: center;
+        min-height: 70px;
+        margin: 16px 0 20px;
+      }
+
+      .status {
+        width: 100%;
+        max-width: 400px;
+        padding: 16px 24px;
+        border-radius: 20px;
+        display: none;
+        align-items: center;
+        gap: 12px;
+        background: #1f2a37;
+        border: 1px solid #374151;
+        backdrop-filter: blur(10px);
+        font-size: 14px;
+        line-height: 1.5;
+        box-shadow: 0 10px 25px -8px rgba(0, 0, 0, 0.4);
+        transition: all 0.3s ease;
+        margin: 0 auto;
+      }
+
+      .status i {
+        font-size: 20px;
+        flex-shrink: 0;
+      }
+
+      .status span {
+        flex: 1;
+        word-break: break-word;
+      }
+
+      .status.success {
+        display: flex;
+        border-left: 4px solid #10b981;
+        background: rgba(16, 185, 129, 0.1);
+        border-color: #10b981;
+        color: #d1fae5;
+      }
+
+      .status.success i {
+        color: #10b981;
+      }
+
+      .status.error {
+        display: flex;
+        border-left: 4px solid #dc2626;
+        background: rgba(220, 38, 38, 0.1);
+        border-color: #dc2626;
+        color: #fee2e2;
+      }
+
+      .status.error i {
+        color: #f87171;
+      }
+
+      .status.info {
+        display: flex;
+        border-left: 4px solid #3b82f6;
+        background: rgba(59, 130, 246, 0.1);
+        border-color: #3b82f6;
+        color: #dbeafe;
+      }
+
+      .status.info i {
+        color: #60a5fa;
+      }
+
+      /* Footer */
+      .footer-section {
+        margin-top: 28px;
+        text-align: center;
+      }
+
+      .footer-note {
+        color: #6b7280;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 12px 24px;
+        border-radius: 100px;
+        border: 1px solid rgba(255, 255, 255, 0.02);
+        width: fit-content;
+        margin: 0 auto;
+        backdrop-filter: blur(5px);
+        flex-wrap: wrap;
+      }
+
+      .footer-note i {
+        color: #9ca3af;
+        font-size: 14px;
+      }
+
+      .footer-note .separator {
+        color: #374151;
+        font-size: 4px;
+      }
+
+      .footer-note span {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 480px) {
+        .glass-panel {
+          padding: 24px 16px;
+          border-radius: 32px;
+        }
+
+        .contact-badge {
+          padding: 8px 16px;
+          font-size: 13px;
+        }
+
+        .instruction {
+          padding: 12px 20px;
+          font-size: 14px;
+        }
+
+        .footer-note {
+          padding: 10px 16px;
+          font-size: 12px;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .status {
+          padding: 14px 18px;
+          font-size: 13px;
+        }
+      }
+
+      /* Landscape mode */
+      @media (max-height: 600px) and (orientation: landscape) {
+        body {
+          padding: 8px;
+          align-items: flex-start;
+          overflow-y: auto;
+        }
+
+        .glass-panel {
+          padding: 20px;
+        }
+
+        .alert-button {
+          width: 180px;
+          height: 180px;
+          min-width: 150px;
+          min-height: 150px;
+          font-size: 60px;
+        }
+
+        .button-section {
+          margin: 10px 0 15px;
+        }
+      }
+
+      /* Safe area for notched phones */
+      @supports (padding: max(0px)) {
+        .glass-panel {
+          padding-left: max(24px, env(safe-area-inset-left));
+          padding-right: max(24px, env(safe-area-inset-right));
+        }
+      }
+
+      /* Touch device optimization */
+      @media (hover: none) and (pointer: coarse) {
+        .alert-button:hover {
+          transform: none;
+        }
+
+        .alert-button:active {
+          transform: scale(0.97);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="glass-panel">
+        <!-- Header Section -->
+        <div class="header-section">
+          <div class="contact-badge">
+            <i class="fas fa-shield-hal"></i>
+            <span>Emergency Contact</span>
+            <i
+              class="fas fa-chevron-right"
+              style="font-size: 10px; opacity: 0.5"
+            ></i>
+            <span style="color: #f87171">emergency@alert.com</span>
+            <span class="status-dot"></span>
+          </div>
+          <div class="title">
+            <span style="opacity: 0.7">Emergency</span>
+            <span style="color: #f87171; font-weight: 600"
+              >Location System</span
+            >
+          </div>
+        </div>
+
+        <!-- Button Section -->
+        <div class="button-section">
+          <button
+            class="alert-button"
+            onclick="sendLocation()"
+            id="alertBtn"
+            aria-label="Send emergency alert"
+          >
+            <i class="fas fa-exclamation"></i>
+          </button>
+        </div>
+
+        <!-- Instruction -->
+        <div class="instruction">
+          <i class="fas fa-hand-pointer"></i>
+          <span>Tap to send emergency alert with your location</span>
+        </div>
+
+        <!-- Status Section -->
+        <div class="status-section">
+          <div id="status" class="status">
+            <i class="fas"></i>
+            <span id="statusMessage"></span>
+          </div>
+        </div>
+
+        <!-- Footer Section -->
+        <div class="footer-section">
+          <div class="footer-note">
+            <span><i class="fas fa-lock"></i> End-to-end encrypted</span>
+            <span class="separator">•</span>
+            <span><i class="fas fa-location-dot"></i> Real-time GPS</span>
+            <span class="separator">•</span>
+            <span><i class="fas fa-bolt"></i> Instant alert</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+  </body>
+</html>
