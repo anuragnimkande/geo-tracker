@@ -71,7 +71,7 @@ function sendLocation() {
       );
 
       // Send to server
-      fetch("http://127.0.0.1:5000/send-location", {
+      fetch("/send-location", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
