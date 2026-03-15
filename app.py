@@ -5,6 +5,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
 from dotenv import load_dotenv
+import threading
 from datetime import datetime
 
 load_dotenv()
@@ -650,37 +651,29 @@ DO NOT IGNORE - This requires immediate attention.
 def send_location():
     try:
         data = request.json
-        
         latitude = data.get("latitude")
         longitude = data.get("longitude")
         accuracy = data.get("accuracy", "High")
-        
+
         if not all([latitude, longitude]):
             return jsonify({"status": "Missing location data"}), 400
-        
-        # Generate Google Maps Link
+
         location_link = f"https://www.google.com/maps?q={latitude},{longitude}"
-        
-        # Send to hardcoded emergency contact
-        result = send_emergency_email(EMERGENCY_CONTACT, location_link, accuracy)
-        
-        if result:
-            return jsonify({
-                "status": "success",
-                "message": "Emergency alert sent successfully!"
-            })
-        else:
-            return jsonify({
-                "status": "error",
-                "message": "Failed to send emergency alert"
-            }), 500
-            
+
+        # Send email in background thread
+        threading.Thread(
+            target=send_emergency_email,
+            args=(EMERGENCY_CONTACT, location_link, accuracy)
+        ).start()
+
+        return jsonify({
+            "status": "success",
+            "message": "Emergency alert triggered!"
+        })
+
     except Exception as e:
         print("Error:", e)
-        return jsonify({
-            "status": "error",
-            "message": "Emergency system error"
-        }), 500
+        return jsonify({"status": "error"}), 500
 
 @app.route("/health", methods=["GET"])
 def health():
@@ -690,4 +683,4 @@ if __name__ == "__main__":
     if not SENDER_EMAIL or not APP_PASSWORD:
         print("⚠️ Email credentials not set in environment variables!")
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run()
