@@ -1,28 +1,39 @@
 function showStatus(message, type) {
   const statusDiv = document.getElementById("status");
   const statusMessage = document.getElementById("statusMessage");
+
+  // Check if elements exist
+  if (!statusDiv || !statusMessage) return;
+
   const icon = statusDiv.querySelector(".fas");
 
-  // Reset classes
+  // Reset classes but preserve display
+  const currentDisplay = statusDiv.style.display;
   statusDiv.className = "status";
+  statusDiv.style.display = currentDisplay || "flex"; // Ensure it's visible
 
   // Set icon and class based on type
   if (type === "success") {
-    icon.className = "fas fa-check-circle";
+    if (icon) icon.className = "fas fa-check-circle";
     statusDiv.classList.add("success");
   } else if (type === "error") {
-    icon.className = "fas fa-exclamation-circle";
+    if (icon) icon.className = "fas fa-exclamation-circle";
     statusDiv.classList.add("error");
   } else if (type === "info") {
-    icon.className = "fas fa-info-circle";
+    if (icon) icon.className = "fas fa-info-circle";
     statusDiv.classList.add("info");
   }
 
   statusMessage.textContent = message;
 
+  // Clear any existing timeout
+  if (window.statusTimeout) {
+    clearTimeout(window.statusTimeout);
+  }
+
   // Auto hide success messages after 4 seconds
   if (type === "success") {
-    setTimeout(() => {
+    window.statusTimeout = setTimeout(() => {
       if (statusDiv.classList.contains("success")) {
         statusDiv.style.display = "none";
         statusDiv.classList.remove("success");
@@ -33,6 +44,7 @@ function showStatus(message, type) {
 
 function setLoading(isLoading) {
   const alertBtn = document.getElementById("alertBtn");
+  if (!alertBtn) return;
 
   if (isLoading) {
     alertBtn.classList.add("loading");
@@ -45,33 +57,36 @@ function setLoading(isLoading) {
 }
 
 function sendLocation() {
-  // Prevent multiple clicks
   const alertBtn = document.getElementById("alertBtn");
-  if (alertBtn.disabled) return;
+  if (!alertBtn || alertBtn.disabled) return;
 
   setLoading(true);
 
-  // Check for geolocation support
   if (!navigator.geolocation) {
     showStatus("Geolocation is not supported by your browser", "error");
     setLoading(false);
     return;
   }
 
-  // Get current position with high accuracy
   navigator.geolocation.getCurrentPosition(
     function (position) {
       const latitude = position.coords.latitude;
       const longitude = position.coords.longitude;
       const accuracy = position.coords.accuracy;
 
+      console.log("Latitude:", latitude);
+      console.log("Longitude:", longitude);
+      console.log("Accuracy:", accuracy);
+
       showStatus(
         `📍 Location acquired (${Math.round(accuracy)}m precision). Sending alert...`,
         "info",
       );
 
-      // Send to server
-      fetch("/send-location", {
+      // Send to deployed server instead of localhost
+      const apiURL = window.location.origin + "/send-location";
+
+      fetch(apiURL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -100,7 +115,7 @@ function sendLocation() {
           }
         })
         .catch((error) => {
-          console.error("Error:", error);
+          console.error("Fetch error:", error);
           showStatus(
             error.message || "Connection error. Please try again.",
             "error",
@@ -113,17 +128,15 @@ function sendLocation() {
     function (error) {
       setLoading(false);
 
-      // Handle specific geolocation errors
+      // FIXED: Use error codes correctly
       const errorMessages = {
-        [error.PERMISSION_DENIED]:
-          "Location access denied. Please enable location services.",
-        [error.POSITION_UNAVAILABLE]:
-          "Location unavailable. Try moving to an open area.",
-        [error.TIMEOUT]: "Location request timed out. Please try again.",
+        [1]: "Location access denied. Please enable location services.", // PERMISSION_DENIED
+        [2]: "Location unavailable. Try moving to an open area.", // POSITION_UNAVAILABLE
+        [3]: "Location request timed out. Please try again.", // TIMEOUT
       };
 
       showStatus(
-        errorMessages[error.code] || "Unknown error occurred",
+        errorMessages[error.code] || "Unknown error occurred: " + error.message,
         "error",
       );
     },
@@ -140,6 +153,7 @@ document.addEventListener("keydown", (e) => {
   // Send alert on Space or Enter when not typing in an input
   if (
     (e.key === " " || e.key === "Enter") &&
+    e.target &&
     !e.target.matches("input, textarea")
   ) {
     e.preventDefault();
@@ -147,15 +161,20 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-// Add touch feedback
+// Add touch feedback with null check
 if ("ontouchstart" in window) {
-  document
-    .getElementById("alertBtn")
-    .addEventListener("touchstart", function () {
+  const alertBtn = document.getElementById("alertBtn");
+  if (alertBtn) {
+    alertBtn.addEventListener("touchstart", function () {
       this.style.transform = "scale(0.97)";
     });
 
-  document.getElementById("alertBtn").addEventListener("touchend", function () {
-    this.style.transform = "";
-  });
+    alertBtn.addEventListener("touchend", function () {
+      this.style.transform = "";
+    });
+
+    alertBtn.addEventListener("touchcancel", function () {
+      this.style.transform = "";
+    });
+  }
 }
